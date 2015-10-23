@@ -105,16 +105,17 @@ def align_log_prob(i, j, source_sents, target_sents, alignment, params):
     """
     l_s = sum(source_sents[i - offset - 1] for offset in range(alignment[0]))
     l_t = sum(target_sents[j - offset - 1] for offset in range(alignment[1]))
-    try:
-        # actually, the paper says l_s * params.VARIANCE_CHARACTERS, this is based on the C
-        # reference implementation. With l_s in the denominator, insertions are impossible.
-        m = (l_s + l_t / params.AVERAGE_CHARACTERS) / 2
-        delta = (l_s * params.AVERAGE_CHARACTERS - l_t) / math.sqrt(m * params.VARIANCE_CHARACTERS)
-    except ZeroDivisionError:
-        return float('-inf')
-
-    return - (LOG2 + norm_logsf(abs(delta)) + math.log(params.PRIORS[alignment]))
-
+    if l_s == 0 or l_t == 0:
+        return - math.log(params.PRIORS[alignment])
+    else:
+        try:
+            # actually, the paper says l_s * params.VARIANCE_CHARACTERS, this is based on the C
+            # reference implementation. With l_s in the denominator, insertions are impossible.
+            m = (l_s + l_t / params.AVERAGE_CHARACTERS) / 2
+            delta = (l_s * params.AVERAGE_CHARACTERS - l_t) / math.sqrt(m * params.VARIANCE_CHARACTERS)
+        except ZeroDivisionError:
+            return float('-inf')
+        return - (LOG2 + norm_logsf(abs(delta)) + math.log(params.PRIORS[alignment]))
 
 def align_blocks(source_sents, target_sents, params = LanguageIndependent):
     """Return the sentence alignment of two text blocks (usually paragraphs).
@@ -156,7 +157,9 @@ def align_blocks(source_sents, target_sents, params = LanguageIndependent):
                     min_align = a
 
             if min_dist == float('inf'):
-                min_dist = 0
+                a = (1,0)
+                min_dist = align_log_prob(i, j, source_sents, target_sents, a, params)
+                min_align = a
 
             backlinks[(i, j)] = min_align
             D[-1].append(min_dist)
