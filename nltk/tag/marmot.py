@@ -71,7 +71,7 @@ class MarmotTagger(TaggerI):
         self._marmot_model = "/home/dugasl/myGit/mycistern/marmot/zul.marmot"
         self._lemming_model = "/home/dugasl/myGit/mycistern/marmot/lemming.srl"
         self._encoding = encoding
-        cmd = "/usr/bin/java -Xmx20g -cp /home/dugasl/myGit/mycistern/marmot/marmot-2016-03-03.jar:/home/dugasl/myGit/mycistern/marmot/lib/trove.jar marmot.morph.cmd.Annotator -model-file /home/dugasl/myGit/mycistern/marmot/zul.marmot -lemmatizer-file /home/dugasl/myGit/mycistern/marmot/lemming.srl -test-file form-index=0,tag-index=1,- -pred-file -"
+        cmd = "/usr/bin/java -Xmx5g -cp /home/dugasl/myGit/mycistern/marmot/marmot-2016-03-03.jar:/home/dugasl/myGit/mycistern/marmot/lib/trove.jar marmot.morph.cmd.Annotator -model-file /home/dugasl/myGit/mycistern/marmot/zul.marmot -lemmatizer-file /home/dugasl/myGit/mycistern/marmot/lemming.srl -test-file form-index=0,- -pred-file -"
         
         self._marmot = Popen(shlex.split(cmd), shell=False, stdin=PIPE, stdout=PIPE, stderr=PIPE)
         #self._marmot = Popen([self._marmot_bin], shell=False, stdin=PIPE, stdout=PIPE, stderr=PIPE) 
