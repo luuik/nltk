@@ -17,6 +17,7 @@ from nltk.internals import find_binary, find_file
 from nltk.tag.api import TaggerI
 from nltk import compat
 import shlex
+from ast import literal_eval
 
 _marmot_url = 'http://code.google.com/p/hunpos/'
 
@@ -95,23 +96,14 @@ class MarmotTagger(TaggerI):
         The tokens should not contain any newline characters.
         """
         for token in tokens:
-            print token
             assert "\n" not in token, "Tokens should not contain newlines"
             if isinstance(token, compat.text_type):
                 token = token.encode(self._encoding)
-                print "AGAIN: "+token
             self._marmot.stdin.write(token + b"\n")
-        # We write a final empty line to tell hunpos that the sentence is finished:
         self._marmot.stdin.write(b"\n")
         self._marmot.stdin.flush()
         self._marmot.stdout.flush()
-        tagged_tokens = []
-        for token in tokens:
-            print self._marmot.stdout.readline()
-            tagged = self._marmot.stdout.readline().strip().split(b"\t")
-            tag = (tagged[1] if len(tagged) > 1 else None)
-            tagged_tokens.append((token, tag))
-        # We have to read (and dismiss) the final empty line:
-        self._marmot.stdout.readline()
+        s = self._marmot.stdout.readline()
+        tagged_tokens = literal_eval(s)
 
         return tagged_tokens
