@@ -71,11 +71,9 @@ class MarmotTagger(TaggerI):
         self._marmot_model = "/home/dugasl/myGit/mycistern/marmot/zul.marmot"
         self._lemming_model = "/home/dugasl/myGit/mycistern/marmot/lemming.srl"
         self._encoding = encoding
-        cmd = "/usr/bin/java -Xmx5g -cp /home/dugasl/myGit/mycistern/marmot/marmot-2016-03-03.jar:/home/dugasl/myGit/mycistern/marmot/lib/trove.jar marmot.morph.cmd.Annotator -model-file /home/dugasl/myGit/mycistern/marmot/zul.marmot -lemmatizer-file /home/dugasl/myGit/mycistern/marmot/lemming.srl -test-file form-index=0,- -pred-file -"
-        
+        cmd = "/usr/bin/java -Xmx5g -cp /home/dugasl/myGit/mycistern/marmot/marmot-2016-03-04.jar:/home/dugasl/myGit/mycistern/marmot/lib/trove.jar marmot.morph.cmd.Annotator -model-file /home/dugasl/myGit/mycistern/marmot/zul.marmot -lemmatizer-file /home/dugasl/myGit/mycistern/marmot/lemming.srl -test-file form-index=0,- -pred-file -"
+        myout = open('/home/dugasl/myoutput.out','w')
         self._marmot = Popen(shlex.split(cmd), shell=False, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        #self._marmot = Popen([self._marmot_bin], shell=False, stdin=PIPE, stdout=PIPE, stderr=PIPE) 
-        #self._marmot = Popen([self._marmot_bin, "-Xmx20g", "-cp", marmot_path+"/marmot-2016-03-03.jar:"+marmot_path+"/lib/trove.jar", "-model-file", self._marmot_model, "-lemmatizer-file", self._lemming_model, "-test-file", "form-index=0,tag-index=1,-", "-pred-file", "-"], shell=False, stdin=PIPE, stdout=PIPE, stderr=PIPE)
         self._closed = False
 
     def __del__(self):
@@ -101,11 +99,12 @@ class MarmotTagger(TaggerI):
             assert "\n" not in token, "Tokens should not contain newlines"
             if isinstance(token, compat.text_type):
                 token = token.encode(self._encoding)
+                print "AGAIN: "+token
             self._marmot.stdin.write(token + b"\n")
         # We write a final empty line to tell hunpos that the sentence is finished:
         self._marmot.stdin.write(b"\n")
         self._marmot.stdin.flush()
-
+        self._marmot.stdout.flush()
         tagged_tokens = []
         for token in tokens:
             print self._marmot.stdout.readline()
