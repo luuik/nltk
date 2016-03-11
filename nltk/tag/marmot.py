@@ -9,7 +9,7 @@
 """
 A module for interfacing with the Marmot/Lemming POS-tagger and lemmatiser 
 """
-
+from time import sleep
 import os
 from subprocess import Popen, PIPE
 
@@ -26,19 +26,13 @@ _marmot_charset = 'UTF-8'
 
 class MarmotTagger(TaggerI):
     """
-    A class for pos tagging with HunPos. The input is the paths to:
-     - a model trained on training data
-     - (optionally) the path to the hunpos-tag binary
-     - (optionally) the encoding of the training data (default: ISO-8859-1)
-
+    A class for pos tagging with Marmot/Lemming. 
     Example:
 
         >>> from nltk.tag import MarmotTagger
-        >>> mt = MarmotTagger('en_wsj.model')
+        >>> mt = MarmotTagger()
         >>> mt.tag('What is the airspeed of an unladen swallow ?'.split())
-        [('What', 'WP'), ('is', 'VBZ'), ('the', 'DT'), ('airspeed', 'NN'), ('of', 'IN'), ('an', 'DT'), ('unladen', 'NN'), ('swallow', 'VB'), ('?', '.')]
-        >>> mt.close()
-
+    
     This class communicates with the marmot/lemming java binary via pipes. When the
     tagger object is no longer needed, the close() method should be called to
     free system resources. The class supports the context manager interface; if
@@ -72,7 +66,7 @@ class MarmotTagger(TaggerI):
         self._marmot_model = "/home/dugasl/myGit/mycistern/marmot/zul.marmot"
         self._lemming_model = "/home/dugasl/myGit/mycistern/marmot/lemming.srl"
         self._encoding = encoding
-        cmd = "/usr/bin/java -Xmx5g -cp /home/dugasl/myGit/mycistern/marmot/marmot-2016-03-04.jar:/home/dugasl/myGit/mycistern/marmot/lib/trove.jar marmot.morph.cmd.Annotator -model-file /home/dugasl/myGit/mycistern/marmot/zul.marmot -lemmatizer-file /home/dugasl/myGit/mycistern/marmot/lemming.srl -test-file form-index=0,- -pred-file -"
+        cmd = "/usr/bin/java -Xmx5g -cp /home/dugasl/myGit/mycistern/marmot/marmot.jar:/home/dugasl/myGit/mycistern/marmot/lib/trove.jar marmot.morph.cmd.Annotator -model-file /home/dugasl/myGit/mycistern/marmot/zul.marmot -lemmatizer-file /home/dugasl/myGit/mycistern/marmot/lemming.srl -test-file form-index=0,- -pred-file -"
         myout = open('/home/dugasl/myoutput.out','w')
         self._marmot = Popen(shlex.split(cmd), shell=False, stdin=PIPE, stdout=PIPE, stderr=PIPE)
         self._closed = False
@@ -91,19 +85,39 @@ class MarmotTagger(TaggerI):
     def __exit__(self, exc_type, exc_value, traceback):
         self.close()
 
+    def read_one_parse(self):
+        s = self._marmot.stdout.readline()
+        # empty line
+        emptyline = self._marmot.stdout.readline()
+        parse = literal_eval(s)
+        parse = [(x[0].decode(self._encoding), x[1], x[2].decode(self._encoding)) for x in parse]
+        return parse
+
     def tag(self, tokens):
         """Tags a single sentence: a list of words.
         The tokens should not contain any newline characters.
         """
+        encoded_tokens = []
         for token in tokens:
             assert "\n" not in token, "Tokens should not contain newlines"
             if isinstance(token, compat.text_type):
                 token = token.encode(self._encoding)
+            encoded_tokens.append(token)
+        for token in encoded_tokens:
             self._marmot.stdin.write(token + b"\n")
         self._marmot.stdin.write(b"\n")
         self._marmot.stdin.flush()
-        self._marmot.stdout.flush()
-        s = self._marmot.stdout.readline()
-        tagged_tokens = literal_eval(s)
+        # is this useful?
+        sleep(0.05)
 
+        tagged_tokens = []
+        new_parse = self.read_one_parse()
+        tagged_tokens.extend(new_parse)\
+        # was the full string parsed? (input may be splitted by marmot/lemming before parsing)
+        while (len(tagged_tokens)<len(tokens)):
+            new_parse = self.read_one_parse()
+            tagged_tokens.extend(new_parse)
+        assert len(tagged_tokens) == len(tokens)
+        
         return tagged_tokens
+    
