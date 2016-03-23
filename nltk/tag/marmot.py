@@ -66,7 +66,7 @@ class MarmotTagger(TaggerI):
         self._marmot_model = "/home/dugasl/myGit/mycistern/marmot/zul.marmot"
         self._lemming_model = "/home/dugasl/myGit/mycistern/marmot/lemming.srl"
         self._encoding = encoding
-        cmd = "/usr/bin/java -Xmx5g -cp /home/dugasl/myGit/mycistern/marmot/marmot.jar:/home/dugasl/myGit/mycistern/marmot/lib/trove.jar marmot.morph.cmd.Annotator -model-file /home/dugasl/myGit/mycistern/marmot/zul.marmot -lemmatizer-file /home/dugasl/myGit/mycistern/marmot/lemming.srl -test-file form-index=0,- -pred-file -"
+        cmd = "/usr/bin/java -Xmx5g -cp /home/dugasl/myGit/mycistern/marmot/marmot.jar:/home/dugasl/myGit/mycistern/marmot/lib/trove.jar marmot.morph.cmd.Annotator -model-file /home/dugasl/myUNISAGit/termextract/experiments/postagmodels/zul.marmot -lemmatizer-file /home/dugasl/myUNISAGit/termextract/experiments/lemmamodels/zul.lemming -test-file form-index=0,- -pred-file -"
         myout = open('/home/dugasl/myoutput.out','w')
         self._marmot = Popen(shlex.split(cmd), shell=False, stdin=PIPE, stdout=PIPE, stderr=PIPE)
         self._closed = False
