@@ -69,6 +69,7 @@ def grow_diag_final_and(srclen, trglen, e2f, f2e):
     # Converts pharaoh text format into list of tuples.
     e2f = [tuple(map(int,a.split('-'))) for a in e2f.split()]
     f2e = [tuple(map(int,a.split('-'))) for a in f2e.split()]
+
     
     neighbors = [(-1,0),(0,-1),(1,0),(0,1),(-1,-1),(-1,1),(1,-1),(1,1)]
     alignment = set(e2f).intersection(set(f2e)) # Find the intersection.
@@ -78,7 +79,7 @@ def grow_diag_final_and(srclen, trglen, e2f, f2e):
     aligned = defaultdict(set)
     for i,j in alignment:
         aligned['e'].add(i)
-        aligned['j'].add(j)
+        aligned['f'].add(j)
     
     def grow_diag():
         """
@@ -89,6 +90,7 @@ def grow_diag_final_and(srclen, trglen, e2f, f2e):
         # iterate until no new points added
         while prev_len < len(alignment):
             # for english word e = 0 ... en
+            prev_len = len(alignment)
             for e in range(srclen):
                 # for foreign word f = 0 ... fn
                 for f in range(trglen): 
@@ -100,11 +102,12 @@ def grow_diag_final_and(srclen, trglen, e2f, f2e):
                             e_new, f_new = neighbor
                             # if ( ( e-new not aligned and f-new not aligned) 
                             # and (e-new, f-new in union(e2f, f2e) )
-                            if (e_new not in aligned and f_new not in aligned)\
+                            if (e_new not in aligned['e'] and f_new not in aligned['f'])\
                             and neighbor in union:
                                 alignment.add(neighbor)
+                                #print "GDFA GROWN ONE ALIGNMENT :("+str(e_new)+","+str(f_new)+")"
                                 aligned['e'].add(e_new); aligned['f'].add(f_new)
-                                prev_len+=1
+                                #prev_len+=1
                                                                     
     def final_and(a):
         """
@@ -117,10 +120,10 @@ def grow_diag_final_and(srclen, trglen, e2f, f2e):
             for f_new in range(trglen):
                 # if ( ( e-new not aligned and f-new not aligned) 
                 # and (e-new, f-new in union(e2f, f2e) )
-                if (e_new not in aligned
-                    and f_new not in aligned
+                if (e_new not in aligned['e']
+                    and f_new not in aligned['f']
                     and (e_new, f_new) in a):
-
+                    #print "GDFA ADDED ONE ALIGNMENT :("+str(e_new)+","+str(f_new)+")"
                     alignment.add((e_new, f_new))
                     aligned['e'].add(e_new); aligned['f'].add(f_new)
 
